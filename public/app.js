@@ -5,9 +5,6 @@ const API_BASE_URL = window.location.hostname === 'localhost'
   : '/api';
 
 // ===== DOM要素の取得 =====
-const apiKeySection = document.getElementById('apiKeySection');
-const apiKeyInput = document.getElementById('apiKeyInput');
-const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 const promptInput = document.getElementById('promptInput');
 const styleSelect = document.getElementById('styleSelect');
 const sizeSelect = document.getElementById('sizeSelect');
@@ -22,18 +19,9 @@ const downloadBtn = document.getElementById('downloadBtn');
 const regenerateBtn = document.getElementById('regenerateBtn');
 const newImageBtn = document.getElementById('newImageBtn');
 
-// ===== 設定 =====
-let API_KEY = localStorage.getItem('hf_api_key') || '';
-
 // ===== 初期化 =====
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎨 AI Image Generator 起動');
-    
-    // APIキーが保存されているか確認
-    if (API_KEY) {
-        apiKeySection.style.display = 'none';
-        generateBtn.disabled = false;
-    }
     
     // イベントリスナー設定
     setupEventListeners();
@@ -41,9 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== イベントリスナー設定 =====
 function setupEventListeners() {
-    // APIキー保存
-    saveApiKeyBtn.addEventListener('click', saveApiKey);
-    
     // 生成ボタン
     generateBtn.addEventListener('click', generateImage);
     
@@ -70,27 +55,6 @@ function setupEventListeners() {
     });
 }
 
-// ===== APIキー保存 =====
-function saveApiKey() {
-    const key = apiKeyInput.value.trim();
-    
-    if (!key) {
-        showError('APIキーを入力してください');
-        return;
-    }
-    
-    if (!key.startsWith('hf_')) {
-        showError('Hugging FaceのAPIキーは "hf_" で始まります');
-        return;
-    }
-    
-    API_KEY = key;
-    localStorage.setItem('hf_api_key', key);
-    apiKeySection.style.display = 'none';
-    generateBtn.disabled = false;
-    showSuccess('APIキーを保存しました！');
-}
-
 // ===== 画像生成（サーバー経由） =====
 async function generateImage() {
     const prompt = promptInput.value.trim();
@@ -99,12 +63,6 @@ async function generateImage() {
     if (!prompt) {
         showError('画像の説明を入力してください');
         promptInput.focus();
-        return;
-    }
-    
-    if (!API_KEY) {
-        showError('APIキーを設定してください');
-        apiKeySection.style.display = 'block';
         return;
     }
     
@@ -122,22 +80,22 @@ async function generateImage() {
         
         console.log('📝 完全なプロンプト:', fullPrompt);
         
-        // サーバー経由でHugging Face APIにリクエスト
+        // サーバー経由でHugging Face APIにリクエスト（APIキーはサーバー側で管理）
         const response = await fetch(`${API_BASE_URL}/generate-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                prompt: fullPrompt,
-                apiKey: API_KEY
+                prompt: fullPrompt
+                // APIキーはサーバー側の環境変数から取得されるため不要
             })
         });
         
         const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(data.error || 'ゲーム生成に失敗しました');
+            throw new Error(data.error || '画像生成に失敗しました');
         }
         
         if (data.success && data.image) {

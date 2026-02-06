@@ -25,24 +25,6 @@
                     作りたい画像を日本語で説明してください。AIが自動的に画像を生成します！
                 </p>
 
-                <!-- APIキー設定（初回のみ） -->
-                <div id="apiKeySection" class="api-key-section">
-                    <label for="apiKeyInput">🔑 Hugging Face APIキー（初回のみ）</label>
-                    <div class="api-key-input-group">
-                        <input 
-                            type="password" 
-                            id="apiKeyInput" 
-                            placeholder="hf_xxxxxxxxxxxxxxxxxxxxxx"
-                        >
-                        <button id="saveApiKeyBtn" class="btn-secondary">保存</button>
-                    </div>
-                    <p class="help-text">
-                        <a href="https://huggingface.co/settings/tokens" target="_blank">
-                            👉 APIキーの取得方法
-                        </a>
-                    </p>
-                </div>
-
                 <!-- プロンプト入力 -->
                 <div class="input-group">
                     <label for="promptInput">画像の説明</label>
@@ -100,7 +82,7 @@
                 </div>
 
                 <!-- 生成ボタン -->
-                <button id="generateBtn" class="generate-btn" disabled>
+                <button id="generateBtn" class="generate-btn">
                     <span class="btn-text">🖼️ 画像を生成</span>
                     <span class="btn-loading" style="display: none;">
                         <span class="spinner"></span> 生成中...
