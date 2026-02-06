@@ -34,7 +34,7 @@ app.post('/api/generate-image', async (req, res) => {
         console.log('🎨 画像生成リクエスト:', prompt);
         
         // 新しいHugging Face APIエンドポイント（FLUX.1-schnell）
-        const HUGGINGFACE_API = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+        const HUGGINGFACE_API = 'https://router.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
         
         // Hugging Face APIにリクエスト
         const response = await fetch(HUGGINGFACE_API, {
