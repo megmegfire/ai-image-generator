@@ -1,5 +1,4 @@
 const express = require('express');
-const fetch = require('node-fetch');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -14,7 +13,7 @@ app.use(express.static('public'));
 // 環境変数からAPIキーを取得
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
-// 画像生成 API（新しいエンドポイント）
+// 画像生成 API
 app.post('/api/generate-image', async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -23,7 +22,6 @@ app.post('/api/generate-image', async (req, res) => {
             return res.status(400).json({ error: 'プロンプトが必要です' });
         }
         
-        // サーバー側の環境変数のAPIキーを確認
         if (!HUGGINGFACE_API_KEY) {
             console.error('❌ サーバーの環境変数 HUGGINGFACE_API_KEY が設定されていません');
             return res.status(500).json({ 
@@ -33,11 +31,10 @@ app.post('/api/generate-image', async (req, res) => {
         
         console.log('🎨 画像生成リクエスト:', prompt);
         
-        // 新しいHugging Face APIエンドポイント（FLUX.1-schnell）
-        const HUGGINGFACE_API = 'https://router.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+        // Hugging Face Inference API (正しいエンドポイント)
+        const API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1';
         
-        // Hugging Face APIにリクエスト
-        const response = await fetch(HUGGINGFACE_API, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
@@ -45,10 +42,7 @@ app.post('/api/generate-image', async (req, res) => {
             },
             body: JSON.stringify({
                 inputs: prompt,
-                parameters: {
-                    num_inference_steps: 4,  // FLUX.1-schnell用のパラメータ
-                    guidance_scale: 0
-                }
+                options: { wait_for_model: true }
             })
         });
         
@@ -56,7 +50,6 @@ app.post('/api/generate-image', async (req, res) => {
             const errorText = await response.text();
             console.error('❌ Hugging Face APIエラー:', response.status, errorText);
             
-            // エラーメッセージをパース
             let errorMessage = `API エラー: ${response.statusText}`;
             try {
                 const errorData = JSON.parse(errorText);
@@ -64,19 +57,20 @@ app.post('/api/generate-image', async (req, res) => {
                     errorMessage = errorData.error;
                 }
             } catch (e) {
-                // JSON パースに失敗した場合はそのまま
+                errorMessage = errorText || errorMessage;
             }
             
             return res.status(response.status).json({ error: errorMessage });
         }
         
         // 画像データを取得
-        const imageBuffer = await response.buffer();
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         
-        console.log('✅ 画像生成成功:', imageBuffer.length, 'bytes');
+        console.log('✅ 画像生成成功:', buffer.length, 'bytes');
         
         // 画像をBase64に変換して返す
-        const base64Image = imageBuffer.toString('base64');
+        const base64Image = buffer.toString('base64');
         res.json({
             success: true,
             image: `data:image/png;base64,${base64Image}`
@@ -97,7 +91,7 @@ app.get('/api/health', (req, res) => {
         message: 'AI Image Generator API is running',
         timestamp: new Date().toISOString(),
         apiKeyConfigured: !!HUGGINGFACE_API_KEY,
-        model: 'black-forest-labs/FLUX.1-schnell'
+        model: 'stabilityai/stable-diffusion-2-1'
     });
 });
 
@@ -105,7 +99,7 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🎨 AI Image Generator サーバー起動: http://localhost:${PORT}`);
     console.log(`環境変数 HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY ? '設定済み ✅' : '未設定 ❌'}`);
-    console.log(`モデル: black-forest-labs/FLUX.1-schnell`);
+    console.log(`モデル: stabilityai/stable-diffusion-2-1`);
 });
 
 module.exports = app;
